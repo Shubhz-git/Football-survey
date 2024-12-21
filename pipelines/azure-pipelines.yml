@@ -1,0 +1,31 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Docker@2
+  displayName: Build and push User UI image
+  inputs:
+    command: buildAndPush
+    repository: <your-docker-hub-username>/user-ui
+    dockerfile: $(Build.SourcesDirectory)/UserUI/Dockerfile
+    containerRegistry: <your-container-registry-service-connection>
+    tags: |
+      $(Build.BuildId)
+
+- task: Docker@2
+  displayName: Build and push Analytics image
+  inputs:
+    command: buildAndPush
+    repository: <your-docker-hub-username>/analytics
+    dockerfile: $(Build.SourcesDirectory)/Analytics/Dockerfile
+    containerRegistry: <your-container-registry-service-connection>
+    tags: |
+      $(Build.BuildId)
+
+- script: |
+    kubectl apply -f k8s/user-ui-deployment.yaml
+    kubectl apply -f k8s/analytics-deployment.yaml
+  displayName: Deploy to AKS
